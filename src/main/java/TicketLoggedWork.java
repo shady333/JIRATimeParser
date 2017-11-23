@@ -8,9 +8,10 @@ import java.util.Map;
  */
 public class TicketLoggedWork {
     String number;
+    String summary;
     List<String> loggedWork;
 
-    Map<String, Integer> timeByAuthors = new HashMap<String, Integer>();
+    Map<String, String> timeByAuthors = new HashMap<String, String>();
 
     void calculate(){
         for(String comment : loggedWork){
@@ -23,16 +24,17 @@ public class TicketLoggedWork {
             time = parts[parts.length - 1];
 
             if(timeByAuthors.containsKey(name)){
-                Integer a = timeByAuthors.get(name);
-                timeByAuthors.put(name, a + Integer.parseInt(time));
+                String a = timeByAuthors.get(name);
+                timeByAuthors.put(name, String.valueOf(Integer.parseInt(a) + Integer.parseInt(time)));
             }
             else{
-                timeByAuthors.put(name, Integer.parseInt(time));
+                timeByAuthors.put(name, String.valueOf(Integer.parseInt(time)));
             }
         }
     }
 
     TicketLoggedWork(){
+        summary = "";
         number = "";
         loggedWork = new ArrayList<String>();
     }
@@ -42,11 +44,21 @@ public class TicketLoggedWork {
         loggedWork = work;
     }
 
+    TicketLoggedWork(String numb, List<String> work, String sum){
+        number = numb;
+        loggedWork = work;
+        summary = "\"" + sum + "\"";
+    }
+
     void addRecordNumber(String record){
-        number = record;
+        this.number = record;
+    }
+
+    void addRecordSummary(String summary){
+        this.summary = summary;
     }
 
     void addRecordLoggedWork(String work){
-        loggedWork.add(work);
+        this.loggedWork.add(work);
     }
 }
