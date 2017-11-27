@@ -128,7 +128,7 @@ public class Main {
                     builder.append(item.number + ',');
                     builder.append(item.summary + ',');
                     builder.append(entry.getKey() + ',');
-                    builder.append("\"=" + entry.getValue() + "/172800\"");
+                    builder.append("\"=" + entry.getValue() + "/86400\"");
                     builder.append('\n');
                 }
             }
