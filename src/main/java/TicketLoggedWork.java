@@ -3,9 +3,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by Oleg_Dudar on 21-Nov-17.
- */
 public class TicketLoggedWork {
     String number;
     String summary;
