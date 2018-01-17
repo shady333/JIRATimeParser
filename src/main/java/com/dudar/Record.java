@@ -35,4 +35,26 @@ public class Record {
         }
         System.out.println("***************************");
     }
+
+    public void print(String names){
+        boolean check = false;
+        for(String id : logwork.keySet()){
+            if(names.contains(id))
+                check = true;
+                break;
+        }
+        if(check) {
+            System.out.println(this.id);
+            System.out.println(this.number);
+            System.out.println(this.summary);
+            for (String id : logwork.keySet()) {
+                if(names.contains(id))
+                {
+                    System.out.println("Author: " + id);
+                    System.out.println("Logged time: " + DurationFormatUtils.formatDuration(logwork.get(id) * 1000, "HH:mm:ss"));
+                }
+            }
+            System.out.println("***************************");
+        }
+    }
 }
