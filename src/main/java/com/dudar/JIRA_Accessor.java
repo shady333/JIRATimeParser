@@ -27,12 +27,6 @@ public class JIRA_Accessor {
 
     public Map<Long, Record> getWorklogIssues(ConnectionData connectionData, String names){
 
-//        List<String> names1 = new ArrayList<String>(Arrays.asList(names.split(",")));
-//        List<String> resultNames = new ArrayList<>();
-//        for(String a : names1){
-//            resultNames.add(a.trim().replace(" ", "."));
-//        }
-
         final URI jiraServerUri;
         Map<Long, Record> issuesList = new HashMap<>();
         ArrayList<Long> ids = new ArrayList<>();
@@ -58,7 +52,9 @@ public class JIRA_Accessor {
         return null;
     }
 
-    public void testResponse(ConnectionData connectionData, String users) throws AuthenticationException {
+    public List<TicketDataRecord> getResponseResult(ConnectionData connectionData, String users) throws AuthenticationException {
+
+        List<TicketDataRecord> records = new ArrayList<>();
 
         List<String> names1 = new ArrayList<String>(Arrays.asList(users.split(",")));
         List<String> resultNames = new ArrayList<>();
@@ -69,8 +65,6 @@ public class JIRA_Accessor {
         String auth = new String(Base64.encode(connectionData.getUser()+":"+connectionData.getPass()));
         Client client = Client.create();
         //TODO add '' for all items inside users list
-//        String users1 = users;
-//        users1.replaceAll(" ", "%20");
         String buff = "/rest/api/2/search?jql=worklogAuthor%20in%20("+String.join(",", resultNames)+")&maxResults=1000";
         String url_request = connectionData.getUrl()+buff;
 
@@ -83,36 +77,38 @@ public class JIRA_Accessor {
             throw new AuthenticationException("Invalid Username or Password");
         }
         Map<Long, Record> issues = getWorklogIssues(connectionData, String.join(",", resultNames));
-        for(Long id : issues.keySet()){
-            url_request = connectionData.getUrl()+"/rest/api/2/issue/"+id+"/worklog";
-            webResource = client.resource(url_request);
-            response = webResource.header("Authorization", "Basic " + auth).type("application/json").accept("application/json").get(ClientResponse.class);
+        if(!issues.isEmpty()) {
+            for (Long id : issues.keySet()) {
+                url_request = connectionData.getUrl() + "/rest/api/2/issue/" + id + "/worklog";
+                webResource = client.resource(url_request);
+                response = webResource.header("Authorization", "Basic " + auth).type("application/json").accept("application/json").get(ClientResponse.class);
 
-            statusCode = response.getStatus();
-            if (statusCode == 401) {
-                throw new AuthenticationException("Invalid Username or Password");
-            }
-            String response1 = response.getEntity(String.class);
-
-            try {
-                JSONObject jsonVal = new JSONObject(response1);
-
-                JSONArray arr = jsonVal.getJSONArray("worklogs");
-                for (int i = 0; i < arr.length(); i++)
-                {
-                    issues.get(id).updateAuthorAndTime(arr.getJSONObject(i).getJSONObject("author").getString("name"), arr.getJSONObject(i).getLong("timeSpentSeconds"));
+                statusCode = response.getStatus();
+                if (statusCode == 401) {
+                    throw new AuthenticationException("Invalid Username or Password");
                 }
+                String response1 = response.getEntity(String.class);
+                try {
+                    JSONObject jsonVal = new JSONObject(response1);
 
-
-            } catch (JSONException e) {
-                //e.printStackTrace();
+                    JSONArray arr = jsonVal.getJSONArray("worklogs");
+                    for (int i = 0; i < arr.length(); i++) {
+                        issues.get(id).updateAuthorAndTime(arr.getJSONObject(i).getJSONObject("author").getString("name"), arr.getJSONObject(i).getLong("timeSpentSeconds"));
+                    }
+                } catch (JSONException e) {
+                    //e.printStackTrace();
+                }
             }
-        }
 
-        for(Long id : issues.keySet()){
-            issues.get(id).print(String.join(",", resultNames));
+            for (Long id : issues.keySet()) {
+                issues.get(id).print(String.join(",", resultNames));
+                List<TicketDataRecord> retrivedData = issues.get(id).convertToRecords(String.join(",", resultNames));
+                if (retrivedData != null)
+                    records.addAll(retrivedData);
+            }
+            return records;
         }
-
+        return null;
     }
 
 }

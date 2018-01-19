@@ -2,7 +2,9 @@ package com.dudar;
 
 import org.apache.commons.lang.time.DurationFormatUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Record {
@@ -56,5 +58,25 @@ public class Record {
             }
             System.out.println("***************************");
         }
+    }
+
+    public List<TicketDataRecord> convertToRecords(String names){
+        List<TicketDataRecord> ar = new ArrayList<>();
+        boolean check = false;
+        for(String id : logwork.keySet()){
+            if(names.contains(id))
+                check = true;
+            break;
+        }
+        if(check) {
+            for (String name : logwork.keySet()) {
+                if(names.contains(name))
+                {
+                    ar.add(new TicketDataRecord(name, this.number, this.summary, DurationFormatUtils.formatDuration(logwork.get(name) * 1000, "HH:mm:ss")));
+                }
+            }
+            return ar;
+        }
+        return null;
     }
 }

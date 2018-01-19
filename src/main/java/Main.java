@@ -4,53 +4,38 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
-import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.csvreader.CsvReader;
 import com.dudar.ConnectionData;
 import com.dudar.JIRA_Accessor;
 
 import javax.security.sasl.AuthenticationException;
 
+import com.dudar.TicketDataRecord;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
-
-import static javafx.application.Application.launch;
 
 public class Main extends Application{
 
+    public List<TicketDataRecord> records = new ArrayList<>();
+
     public static void main (String[] args) {
-
         launch(args);
-
-//        JIRA_Accessor accessor = new JIRA_Accessor();
-//
-//        try {
-//            accessor.testResponse(PropertiesReader.readPropertiesToCredentiasData());
-//        } catch (AuthenticationException e) {
-//            e.printStackTrace();
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-
-//
-//        doTheJob(args);
-
-
     }
 
     @Override
@@ -75,8 +60,6 @@ public class Main extends Application{
         catch (IOException ex) {
             ex.printStackTrace();
         }
-
-
 
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
@@ -116,8 +99,22 @@ public class Main extends Application{
         usersTextField.setText("Name of users (separateed by comma)");
         grid.add(usersTextField, 1, 4);
 
-        Button btn = new Button("Sign in");
+        Button btn_newWindows = new Button("Results");
         HBox hbBtn = new HBox(10);
+        hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
+        hbBtn.getChildren().add(btn_newWindows);
+        btn_newWindows.setDisable(true);
+        grid.add(hbBtn, 0, 5);
+        btn_newWindows.setOnAction(new EventHandler<ActionEvent>() {
+
+            @Override
+            public void handle(ActionEvent event) {
+                showResultsView(primaryStage);
+            }
+        });
+
+        Button btn = new Button("Get data");
+        hbBtn = new HBox(10);
         hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
         hbBtn.getChildren().add(btn);
         grid.add(hbBtn, 1, 5);
@@ -130,21 +127,88 @@ public class Main extends Application{
                 JIRA_Accessor accessor = new JIRA_Accessor();
 
                 try {
-                    accessor.testResponse(new ConnectionData(urlTextField.getText(), userTextField.getText(), pwBox.getText()), usersTextField.getText());
-
+                    records = accessor.getResponseResult(new ConnectionData(urlTextField.getText(), userTextField.getText(), pwBox.getText()), usersTextField.getText());
                 } catch (AuthenticationException e) {
                     e.printStackTrace();
                 }
 
                 System.out.println("Finish");
-//                calculation();
+                if(!records.isEmpty())
+                    btn_newWindows.setDisable(false);
             }
         });
 
-//        StackPane root = new StackPane();
-//        root.getChildren().add(btn);
-        primaryStage.setScene(new Scene(grid, 300, 250));
+        primaryStage.setScene(new Scene(grid, 660, 400));
+        primaryStage.setX(100);
+        primaryStage.setY(100);
         primaryStage.show();
+    }
+
+    private void showResultsView(Stage primaryStage) {
+        final TableView table = new TableView();
+
+        Label secondLabel = new Label("I'm a Label on new Window");
+
+        StackPane secondaryLayout = new StackPane();
+        secondaryLayout.getChildren().add(secondLabel);
+
+        Scene secondScene = new Scene(secondaryLayout, 800, 600);
+
+        // New window (Stage)
+        Stage newWindow = new Stage();
+        newWindow.setTitle("Second Stage");
+        newWindow.setScene(secondScene);
+
+        // Specifies the modality for new window.
+        newWindow.initModality(Modality.APPLICATION_MODAL);
+
+        // Specifies the owner Window (parent) for new window
+        newWindow.initOwner(primaryStage);
+
+        // Set position of second window, related to primary window.
+        newWindow.setX(primaryStage.getX() + 10);
+        newWindow.setY(primaryStage.getY() + 10);
+
+        table.setEditable(true);
+
+        TableColumn authorNameCol = new TableColumn("Reporter");
+        TableColumn ticketNameCol = new TableColumn("Ticket Name");
+        TableColumn summaryCol = new TableColumn("Summary");
+        TableColumn hoursCol = new TableColumn("Hours");
+
+        table.getColumns().addAll(authorNameCol, ticketNameCol, summaryCol, hoursCol);
+
+        final ObservableList<TicketDataRecord> data1 = FXCollections.observableArrayList(
+                new TicketDataRecord("Jacob1", "ANS-1", "1h 15m", "1"),
+                new TicketDataRecord("Jacob2", "ANS-2", "Summary 2", "2h 15m"),
+                new TicketDataRecord("Jacob3", "ANS-3", "Summary 3", "3h 15m"),
+                new TicketDataRecord("Jacob4", "ANS-4", "Summary 4", "4h 15m"),
+                new TicketDataRecord("Jacob5", "ANS-5", "Summary 5", "5h 15m")
+        );
+
+        final ObservableList<TicketDataRecord> data = FXCollections.observableArrayList();
+        for(TicketDataRecord rec : records){
+            data.add(rec);
+        }
+
+        authorNameCol.setCellValueFactory(
+                new PropertyValueFactory<>("authorName")
+        );
+        ticketNameCol.setCellValueFactory(
+                new PropertyValueFactory<>("ticketNumber")
+        );
+        summaryCol.setCellValueFactory(
+                new PropertyValueFactory<>("ticketSummary")
+        );
+        hoursCol.setCellValueFactory(
+                new PropertyValueFactory<>("loggedHours")
+        );
+
+        table.setItems(data);
+
+        secondaryLayout.getChildren().add(table);
+
+        newWindow.show();
     }
 
     private static void doTheJob(String[] args) {
